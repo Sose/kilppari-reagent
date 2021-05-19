@@ -3,6 +3,12 @@
             [reagent.core :as reagent]))
 
 ;; Helpers
+(defn deg->rad [deg]
+  (* deg (/ js/Math.PI 180)))
+
+(defn add-angle [a b]
+  ;; TODO: check for negative angles?
+  (-> (+ a b) (mod 360)))
 
 (def start-coords [100 100])
 (def start-angle 0)
@@ -26,7 +32,10 @@
    :playing-id nil})
 
 (defn init-turtle! []
-  (swap! state/app-state assoc :turtle initial-turtle))
+  (swap! state/app-state assoc :turtle initial-turtle)
+  (let [img (js/Image.)]
+    (aset img "onload" (fn [] (swap! state/app-state assoc :turtle-img img)))
+    (aset img "src" "/img/turtle.png")))
 
 (defn reset-position! []
   (swap! state/app-state assoc-in [:turtle :coords] start-coords)
@@ -38,7 +47,7 @@
 
 ;; Drawing on the canvas
 
-(def turtle-size 20)
+(def turtle-size 32)
 
 (defn canvas-ctx []
   (get @state/app-state :canvas-ctx))
@@ -58,6 +67,25 @@
     (aset ctx "fillStyle" "black")
     (.fillRect ctx x y turtle-size turtle-size)))
 
+(defn draw-turtle-img
+  "Draws a picture to denote the turtle"
+  []
+  (let [ctx (canvas-ctx)
+        [x y] (get-in @state/app-state [:turtle :coords])
+        cx (- x (/ turtle-size 2))
+        cy (- y (/ turtle-size 2))
+        ;; we add 90 to angle because turtle img is pointing up
+        ;; but 0 degrees means to the left in canvas
+        angledeg (add-angle 90 (get-in @state/app-state [:turtle :angle]))
+        anglerad (deg->rad angledeg)
+        img (get-in @state/app-state [:turtle-img])]
+    (when img
+      (.translate ctx x y)
+      (.rotate ctx anglerad)
+      (.translate ctx (- x) (- y))
+      (.drawImage ctx img cx cy turtle-size turtle-size)
+      (.setTransform ctx 1 0 0 1 0 0)))) ;; reset transformation to id matrix
+
 (defn draw-line [[[x1 y1] [x2 y2]]]
   (let [ctx (canvas-ctx)]
     (.beginPath ctx)
@@ -73,9 +101,6 @@
     (doseq [l line-segs]
       (draw-line l))))
 
-(defn deg->rad [deg]
-  (* deg (/ js/Math.PI 180)))
-
 (defn move-turtle! [distance]
   (let [anglerad (deg->rad (get-in @state/app-state [:turtle :angle]))
         [x y] (get-in @state/app-state [:turtle :coords])
@@ -83,9 +108,6 @@
         dy (-> anglerad js/Math.sin (* distance))]
     (swap! state/app-state assoc-in [:turtle :coords] [(+ x dx) (+ y dy)])
     (swap! state/app-state update-in [:turtle :line] #(conj % [(+ x dx) (+ y dy)]))))
-
-(defn add-angle [a b]
-  (-> (+ a b) (mod 360)))
 
 (defn turn-right! [angle]
   (swap! state/app-state update-in [:turtle :angle] #(add-angle % angle)))
@@ -103,7 +125,8 @@
         :move (move-turtle! (second instruction))
         :turn-right (turn-right! (second instruction))))
     (draw-turtle-line)
-    (draw-turtle-rect)))
+    (draw-turtle-img)))
+    ;;(draw-turtle-rect)))
 
 (defn turtle-step! []
   (let [turtle (active-turtle)
@@ -129,15 +152,13 @@
     (swap! state/app-state assoc-in [:turtle :script-index] max-index)
     (update-turtle!)))
 
-(defn start-playing-turtle! []
-  (let [start-playing (get-in @state/app-state [:turtle :playing])]
-    (if start-playing
-      (let [interval-id (js/setInterval turtle-step! 1000)]
-        (swap! state/app-state assoc-in [:turtle :playing-id] interval-id))
+(defn play-turtle! []
+  (let [is-playing (get-in @state/app-state [:turtle :playing])]
+    (if is-playing
       (let [interval-id (get-in @state/app-state [:turtle :playing-id])]
         (js/clearInterval interval-id)
-        (swap! state/app-state assoc-in [:turtle :playing-id] nil)))))
+        (swap! state/app-state assoc-in [:turtle :playing-id] nil))
+      (let [interval-id (js/setInterval turtle-step! 1000)]
+        (swap! state/app-state assoc-in [:turtle :playing-id] interval-id)))
 
-(defn play-turtle! []
-  (swap! state/app-state update-in [:turtle :playing] not)
-  (start-playing-turtle!))
+    (swap! state/app-state update-in [:turtle :playing] not)))

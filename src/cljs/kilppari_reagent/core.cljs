@@ -37,7 +37,12 @@
   (fn []
     [:span.main
      [:h1 "About kilppari-reagent"]
-     [:p "Made with Clojure and Clojurescript and Reagent to practice"]]))
+     [:p "Made with Clojure and Clojurescript and Reagent to practice."]
+     [:p "Original turtle vector graphic is from "
+      [:a
+       {:href "https://www.vecteezy.com/free-vector/nature"}
+       "Nature Vectors by Vecteezy"]]
+     [:img {:id "turtle-pic" :src "/img/turtle.png" :alt "turtle"}]]))
 
 (defn canvas-element []
   (reagent/create-class
@@ -45,6 +50,7 @@
     (fn [this]
       (let [canvas (rdom/dom-node this)
             canvas-ctx (.getContext canvas "2d")]
+
         ;;(init-drawing-state!) ; doing this in core for now
         (swap! app-state assoc :canvas-ctx canvas-ctx)
         ;; (.addEventListener canvas "mousemove" mouse-move-handler)
