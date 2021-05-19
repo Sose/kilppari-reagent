@@ -10,6 +10,15 @@
   ;; TODO: check for negative angles?
   (-> (+ a b) (mod 360)))
 
+(defn pen-down? [step]
+  (->> (get-in @state/app-state [:turtle :script])
+       (take step)
+       (filter #(= :pen (first %)))
+       last
+       second
+       (= :up)
+       not))
+
 (def start-coords [100 100])
 (def start-angle 0)
 
@@ -17,30 +26,29 @@
   [[:move 50]
    [:turn-right 45]
    [:move 100]
-   [:turn-right 90]
+   [:pen :up]
    [:move 75]
-   [:turn-right 45]
+   [:turn-left 45]
+   [:pen :down]
    [:move 50]])
 
 (def initial-turtle
-  {:coords start-coords
-   :angle start-angle
-   :line [start-coords]
-   :script default-turtle-script
+  {:script default-turtle-script
    :script-index 0
    :playing false
    :playing-id nil})
 
+(defn reset-position! []
+  (swap! state/app-state assoc-in [:turtle :coords] start-coords)
+  (swap! state/app-state assoc-in [:turtle :line] [{:coords start-coords :step 0}])
+  (swap! state/app-state assoc-in [:turtle :angle] start-angle))
+
 (defn init-turtle! []
   (swap! state/app-state assoc :turtle initial-turtle)
+  (reset-position!)
   (let [img (js/Image.)]
     (aset img "onload" (fn [] (swap! state/app-state assoc :turtle-img img)))
     (aset img "src" "/img/turtle.png")))
-
-(defn reset-position! []
-  (swap! state/app-state assoc-in [:turtle :coords] start-coords)
-  (swap! state/app-state assoc-in [:turtle :line] [start-coords])
-  (swap! state/app-state assoc-in [:turtle :angle] start-angle))
 
 (defn active-turtle []
   (get @state/app-state :turtle))
@@ -75,7 +83,7 @@
         cx (- x (/ turtle-size 2))
         cy (- y (/ turtle-size 2))
         ;; we add 90 to angle because turtle img is pointing up
-        ;; but 0 degrees means to the left in canvas
+        ;; but 0 degrees means to the right in canvas
         angledeg (add-angle 90 (get-in @state/app-state [:turtle :angle]))
         anglerad (deg->rad angledeg)
         img (get-in @state/app-state [:turtle-img])]
@@ -86,7 +94,7 @@
       (.drawImage ctx img cx cy turtle-size turtle-size)
       (.setTransform ctx 1 0 0 1 0 0)))) ;; reset transformation to id matrix
 
-(defn draw-line [[[x1 y1] [x2 y2]]]
+(defn draw-line [[x1 y1] [x2 y2]]
   (let [ctx (canvas-ctx)]
     (.beginPath ctx)
     (.moveTo ctx x1 y1)
@@ -99,18 +107,25 @@
   (let [turtle (active-turtle)
         line-segs (partition 2 1 (:line turtle))]
     (doseq [l line-segs]
-      (draw-line l))))
+      (let [pen-down (pen-down? (-> l second :step))
+            c1 (-> l first :coords)
+            c2 (-> l second :coords)]
+        (when pen-down (draw-line c1 c2))))))
 
-(defn move-turtle! [distance]
+(defn move-turtle! [distance step-n]
   (let [anglerad (deg->rad (get-in @state/app-state [:turtle :angle]))
         [x y] (get-in @state/app-state [:turtle :coords])
         dx (-> anglerad js/Math.cos (* distance))
         dy (-> anglerad js/Math.sin (* distance))]
     (swap! state/app-state assoc-in [:turtle :coords] [(+ x dx) (+ y dy)])
-    (swap! state/app-state update-in [:turtle :line] #(conj % [(+ x dx) (+ y dy)]))))
+    (swap! state/app-state update-in [:turtle :line] #(conj % {:coords [(+ x dx) (+ y dy)]
+                                                               :step step-n}))))
 
 (defn turn-right! [angle]
   (swap! state/app-state update-in [:turtle :angle] #(add-angle % angle)))
+
+(defn turn-left! [angle]
+  (swap! state/app-state update-in [:turtle :angle] #(add-angle % (- angle))))
 
 (defn update-turtle!
   "Updates current location based on script"
@@ -120,10 +135,13 @@
         steps (:script-index turtle)]
     (reset-position!)
     (clear-screen)
-    (doseq [instruction (take steps script)]
-      (case (first instruction)
-        :move (move-turtle! (second instruction))
-        :turn-right (turn-right! (second instruction))))
+    (doseq [step-n (range steps)]
+      (let [[instr data] (nth script step-n)]
+        (case instr
+          :move (move-turtle! data step-n)
+          :turn-right (turn-right! data)
+          :turn-left (turn-left! data)
+          :pen nil)))
     (draw-turtle-line)
     (draw-turtle-img)))
     ;;(draw-turtle-rect)))
