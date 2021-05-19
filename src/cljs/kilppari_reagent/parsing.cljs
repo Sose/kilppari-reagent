@@ -9,19 +9,18 @@
     A = 'a'+
     B = 'b'+"))
 
-;;(defparser turtle-parser "http://localhost:3000/grammar.txt")
-
 (defparser turtle-parser
-  "S = line*
-<line> = <whitespace*> command <eol>
+  "S = line* <end?>
+<line> = <empty-line> | (<whitespace*> command <eol>)
+<empty-line> = <whitespace*> <eol>
 <command> = move | turn-right | turn-left | repeat | pen
-whitespace = ' ' | '\t'
+<whitespace> = ' ' | '\t'
 pen = <'pen '> ('up' | 'down')
 move = <'move '> n
 turn-right = <'turn-right '> n
 turn-left = <'turn-left '> n
 repeat = <'repeat '> n <eol> line* <end>
-end = <'end'>
+end = <whitespace*> <'end'>
 n = #'[012345679]+'
 eol = '\n'")
 
