@@ -1,14 +1,26 @@
 (ns kilppari-reagent.core
   (:require
+   [clojure.pprint :refer [pprint]]
    [reagent.core :as reagent :refer [atom]]
    [reagent.dom :as rdom]
    [reagent.session :as session]
    [reitit.frontend :as reitit]
    [clerk.core :as clerk]
    [accountant.core :as accountant]
+   [ajax.core :as ajax :refer [GET]]
    [kilppari-reagent.state :refer [app-state]]
    [kilppari-reagent.turtle :as turtle]
-   [kilppari-reagent.state :as state]))
+   [kilppari-reagent.state :as state]
+   [kilppari-reagent.parsing :as parsing]))
+
+;; Load a default script with AJAX
+(defn get-default-script! []
+  (GET "/example.turtle"
+    {:handler (fn [data]
+                (swap! app-state assoc :default-script data))
+     :error-handler (fn [err]
+                      (js/alert "error loading default script")
+                      (js/console.log err))}))
 
 
 ;; -------------------------
@@ -70,21 +82,22 @@
   (let [class (if (and show-active? (= cur-i view-i)) "active" "step")]
     (case instr
       :repeat [:li
-               {:class class :key cur-i}
+               {:class class :key view-i}
                [:div
                 [:div (str ":repeat " (first data))]
-                [:div (script-view (second data) false)]]]
+                [:div (script-view (second data) (second data) false)]]]
 
       [:li {:class class :key cur-i} (str instr " " (first data))])))
 
-(defn script-view [script main-script?]
-  (let [active-index (:index script)
-        instructions (:instructions script)]
-    [:ul
-     (for [i (range (count instructions))]
-       (let [[instr & data] (nth instructions i)]
-         (script-item instr data active-index i main-script?)))
-     [:li (when (>= active-index (count instructions)) {:key "end" :class "active"}) "end"]]))
+(defn script-view [instructions active-index main-script?]
+  [:ul
+   (for [i (range (count instructions))]
+     (let [[instr & data] (nth instructions i)]
+       (script-item instr data active-index i main-script?)))
+   [:li (when
+         (and main-script? (>= active-index (count instructions))
+              {:key "end" :class "active"}))
+    "end"]])
 
 (defn turtle-page []
   (fn []
@@ -94,7 +107,10 @@
      [:div.container
       [:div.row
        [:div.col [canvas-element]]
-       [:div.col [script-view (get-in @app-state [:turtle :script]) true]]]]
+       [:div.col [script-view
+                  (get-in @app-state [:turtle :script])
+                  (get-in @app-state [:turtle :script-index])
+                  true]]]]
 
      [:div.turtle-buttons
       [:button {:on-click turtle/back-to-start!} "<<"]
@@ -104,21 +120,31 @@
       [:button {:on-click turtle/turtle-step!} "->"]
       [:button {:on-click turtle/go-to-end!} ">>"]]]))
 
-(def default-script-txt
-  "move 50\nturn-right 45 //degrees\nmove 25\nend //optional")
+(defn set-script! [script]
+  (swap! app-state assoc-in [:turtle :script] script)
+  (swap! app-state assoc-in [:turtle :script-index] 0))
 
 (defn edit-page []
-  (let [txt (reagent/atom default-script-txt)]
-    (fn []
+  (let [default-script (get @app-state :default-script)
+        txt (reagent/atom default-script)]
+    (if-not default-script
       [:span.main
-       [:h1 "Editor"]
-       [:textarea {:rows 10
-                   :cols 40
-                   :value @txt
-                   :on-change #(reset! txt (-> % .-target .-value))}]
-       [:div.editor-buttons
-        [:button {:on-click #()} "Set as active"]
-        [:button {:on-click #(reset! txt default-script-txt)} "Reset"]]])))
+       [:h1 "Loading"]]
+      (fn []
+        (let [parsed (parsing/parse-turtle @txt)]
+          [:span.main
+           [:h1 "Editor"]
+           [:div.row
+            [:div.col [:textarea {:rows 15
+                                  :cols 30
+                                  :value @txt
+                                  :on-change #(reset! txt (-> % .-target .-value))}]]
+            (if parsed
+              [:div.col [script-view parsed 0 false]]
+              [:div.col "No parse :("])]
+           [:div.editor-buttons
+            [:button {:on-click #(set-script! parsed)} "Set as active"]
+            [:button {:on-click #(reset! txt default-script)} "Reset"]]])))))
 
 ;; -------------------------
 ;; Translate routes -> page components
@@ -173,5 +199,6 @@
     (fn [path]
       (boolean (reitit/match-by-path router path)))})
   (accountant/dispatch-current!)
+  (get-default-script!)
   (turtle/init-turtle!)
   (mount-root))
