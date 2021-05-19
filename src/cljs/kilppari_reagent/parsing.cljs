@@ -11,15 +11,16 @@
 
 (defparser turtle-parser
   "S = line* <end?>
-<line> = <empty-line> | (<whitespace*> command <eol>)
+<line> = (<comment> <eol>) | <empty-line> | (<whitespace*> command <comment?> <eol>)
 <empty-line> = <whitespace*> <eol>
 <command> = move | turn-right | turn-left | repeat | pen
 <whitespace> = ' ' | '\t'
+<comment> = <whitespace>* <#'//[ a-zA-Z0-9]*'>
 pen = <'pen '> ('up' | 'down')
 move = <'move '> n
 turn-right = <'turn-right '> n
 turn-left = <'turn-left '> n
-repeat = <'repeat '> n <eol> line* <end>
+repeat = <'repeat '> n <comment?> <eol> line* <end>
 end = <whitespace*> <'end'>
 n = #'[012345679]+'
 eol = '\n'")
