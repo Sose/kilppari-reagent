@@ -19,7 +19,8 @@
   (reitit/router
    [["/" :index]
     ["/turtle" :turtle]
-    ["/about" :about]]))
+    ["/about" :about]
+    ["/edit" :edit]]))
 
 (defn path-for [route & [params]]
   (if params
@@ -103,6 +104,22 @@
       [:button {:on-click turtle/turtle-step!} "->"]
       [:button {:on-click turtle/go-to-end!} ">>"]]]))
 
+(def default-script-txt
+  "move 50\nturn-right 45 //degrees\nmove 25\nend //optional")
+
+(defn edit-page []
+  (let [txt (reagent/atom default-script-txt)]
+    (fn []
+      [:span.main
+       [:h1 "Editor"]
+       [:textarea {:rows 10
+                   :cols 40
+                   :value @txt
+                   :on-change #(reset! txt (-> % .-target .-value))}]
+       [:div.editor-buttons
+        [:button {:on-click #()} "Set as active"]
+        [:button {:on-click #(reset! txt default-script-txt)} "Reset"]]])))
+
 ;; -------------------------
 ;; Translate routes -> page components
 
@@ -111,7 +128,8 @@
   (case route
     :index #'home-page
     :about #'about-page
-    :turtle #'turtle-page))
+    :turtle #'turtle-page
+    :edit #'edit-page))
 
 
 ;; -------------------------
@@ -126,7 +144,8 @@
         [:p
          [:a {:href (path-for :index)} "Home"] " | "
          [:a {:href (path-for :about)} "About"] " | "
-         [:a {:href (path-for :turtle)} "Turtle"]]]
+         [:a {:href (path-for :turtle)} "Turtle"] " | "
+         [:a {:href (path-for :edit)} "Edit"]]]
        [page]
        [:footer
         [:p "Kilppari nyymi 2021"]]])))
