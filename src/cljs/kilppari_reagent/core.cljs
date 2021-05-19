@@ -63,8 +63,8 @@
       [:canvas {:width 400 :height 300 :id "piirtely"}])}))
 
 (defn script-view []
-  (let [script-index (get-in @app-state [:turtle :script-index])
-        script (get-in @app-state [:turtle :script])]
+  (let [script-index (get-in @app-state [:turtle :script :index])
+        script (get-in @app-state [:turtle :script :instructions])]
     [:ul
      (for [i (range (count script))]
        (let [class (if (= i script-index) "active" "step")]

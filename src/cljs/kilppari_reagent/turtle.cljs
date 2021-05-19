@@ -13,7 +13,7 @@
 (defn pen-down?
   "Is the pen down at a given step index?"
   [step]
-  (->> (get-in @state/app-state [:turtle :script])
+  (->> (get-in @state/app-state [:turtle :script :instructions])
        (take step)                  ;; example:
        (filter #(= :pen (first %))) ;;=> ([:pen :up] [:pen :down])
        last                         ;;=> [:pen :down]
@@ -25,18 +25,22 @@
 (def start-angle 0)
 
 (def default-turtle-script
-  [[:move 50]
-   [:turn-right 45]
-   [:move 100]
-   [:pen :up]
-   [:move 75]
-   [:turn-left 45]
-   [:pen :down]
-   [:move 50]])
+  {:instructions
+   [[:move 50]
+    [:turn-right 45]
+    [:move 100]
+    [:pen :up]
+    [:move 75]
+    [:turn-left 45]
+    [:pen :down]
+    [:move 50]]
+   :index 0})
 
 (def initial-turtle
   {:script default-turtle-script
-   :script-index 0
+   :coords nil ;; reset-position! sets these 3
+   :angle nil
+   :line nil
    :playing false
    :playing-id nil})
 
@@ -51,9 +55,6 @@
   (let [img (js/Image.)]
     (aset img "onload" (fn [] (swap! state/app-state assoc :turtle-img img)))
     (aset img "src" "/img/turtle.png")))
-
-(defn active-turtle []
-  (get @state/app-state :turtle))
 
 ;; Drawing on the canvas
 
@@ -96,7 +97,7 @@
 (defn draw-turtle-line
   "Draws the line up to current line of the script"
   []
-  (let [turtle (active-turtle)
+  (let [turtle (:turtle @state/app-state)
         line-segs (partition 2 1 (:line turtle))]
     (doseq [l line-segs]
       (let [pen-down (pen-down? (-> l second :step))
@@ -122,9 +123,9 @@
 (defn update-turtle!
   "Updates current location based on script"
   []
-  (let [turtle (active-turtle)
-        script (:script turtle)
-        steps (:script-index turtle)]
+  (let [turtle (:turtle @state/app-state)
+        script (get-in turtle [:script :instructions])
+        steps (get-in turtle [:script :index])]
     (reset-position!)
     (clear-screen)
     (doseq [step-n (range steps)]
@@ -138,27 +139,26 @@
     (draw-turtle-img)))
 
 (defn turtle-step! []
-  (let [turtle (active-turtle)
-        max-index (count (:script turtle))
-        new-index (inc (:script-index turtle))]
+  (let [turtle (:turtle @state/app-state)
+        max-index (count (get-in turtle [:script :instructions]))
+        new-index (inc (get-in turtle [:script :index]))]
     (when (>= max-index new-index)
-      (swap! state/app-state assoc-in [:turtle :script-index] new-index)
+      (swap! state/app-state assoc-in [:turtle :script :index] new-index)
       (update-turtle!))))
 
 (defn turtle-step-back! []
-  (let [turtle (active-turtle)
-        new-index (dec (:script-index turtle))]
+  (let [new-index (dec (get-in @state/app-state [:turtle :script :index]))]
     (when (>= new-index 0)
-      (swap! state/app-state assoc-in [:turtle :script-index] new-index)
+      (swap! state/app-state assoc-in [:turtle :script :index] new-index)
       (update-turtle!))))
 
 (defn back-to-start! []
-  (swap! state/app-state assoc-in [:turtle :script-index] 0)
+  (swap! state/app-state assoc-in [:turtle :script :index] 0)
   (update-turtle!))
 
 (defn go-to-end! []
-  (let [max-index (count (get-in @state/app-state [:turtle :script]))]
-    (swap! state/app-state assoc-in [:turtle :script-index] max-index)
+  (let [max-index (count (get-in @state/app-state [:turtle :script :instructions]))]
+    (swap! state/app-state assoc-in [:turtle :script :index] max-index)
     (update-turtle!)))
 
 (defn play-turtle! []
