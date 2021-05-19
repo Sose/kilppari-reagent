@@ -10,14 +10,16 @@
   ;; TODO: check for negative angles?
   (-> (+ a b) (mod 360)))
 
-(defn pen-down? [step]
+(defn pen-down?
+  "Is the pen down at a given step index?"
+  [step]
   (->> (get-in @state/app-state [:turtle :script])
-       (take step)
-       (filter #(= :pen (first %)))
-       last
-       second
-       (= :up)
-       not))
+       (take step)                  ;; example:
+       (filter #(= :pen (first %))) ;;=> ([:pen :up] [:pen :down])
+       last                         ;;=> [:pen :down]
+       second                       ;;=> :down
+       (not= :up)))                 ;; we do it like this in case the list is
+                                    ;; empty.. (not nil) => true
 
 (def start-coords [100 100])
 (def start-angle 0)
@@ -65,16 +67,6 @@
     (aset ctx "fillStyle" "white")
     (.fillRect ctx 0 0 600 600)))
 
-(defn draw-turtle-rect
-  "Draws a rectangle to denote the turtle"
-  []
-  (let [ctx (canvas-ctx)
-        [centerx centery] (get-in @state/app-state [:turtle :coords])
-        x (- centerx (/ turtle-size 2))
-        y (- centery (/ turtle-size 2))]
-    (aset ctx "fillStyle" "black")
-    (.fillRect ctx x y turtle-size turtle-size)))
-
 (defn draw-turtle-img
   "Draws a picture to denote the turtle"
   []
@@ -82,7 +74,7 @@
         [x y] (get-in @state/app-state [:turtle :coords])
         cx (- x (/ turtle-size 2))
         cy (- y (/ turtle-size 2))
-        ;; we add 90 to angle because turtle img is pointing up
+        ;; add 90 to angle because turtle img is pointing up
         ;; but 0 degrees means to the right in canvas
         angledeg (add-angle 90 (get-in @state/app-state [:turtle :angle]))
         anglerad (deg->rad angledeg)
@@ -141,10 +133,9 @@
           :move (move-turtle! data step-n)
           :turn-right (turn-right! data)
           :turn-left (turn-left! data)
-          :pen nil)))
+          :pen nil))) ;; pen instructions are handled by (pen-down? step-n)
     (draw-turtle-line)
     (draw-turtle-img)))
-    ;;(draw-turtle-rect)))
 
 (defn turtle-step! []
   (let [turtle (active-turtle)
