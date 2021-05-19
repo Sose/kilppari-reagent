@@ -7,7 +7,8 @@
    [clerk.core :as clerk]
    [accountant.core :as accountant]
    [kilppari-reagent.state :refer [app-state]]
-   [kilppari-reagent.turtle :as turtle]))
+   [kilppari-reagent.turtle :as turtle]
+   [kilppari-reagent.state :as state]))
 
 
 ;; -------------------------
@@ -62,14 +63,27 @@
     (fn []
       [:canvas {:width 400 :height 300 :id "piirtely"}])}))
 
-(defn script-view []
-  (let [script-index (get-in @app-state [:turtle :script :index])
-        script (get-in @app-state [:turtle :script :instructions])]
+(declare script-view)
+
+(defn script-item [instr data cur-i view-i show-active?]
+  (let [class (if (and show-active? (= cur-i view-i)) "active" "step")]
+    (case instr
+      :repeat [:li
+               {:class class :key cur-i}
+               [:div
+                [:div (str ":repeat " (first data))]
+                [:div (script-view (second data) false)]]]
+
+      [:li {:class class :key cur-i} (str instr " " (first data))])))
+
+(defn script-view [script main-script?]
+  (let [active-index (:index script)
+        instructions (:instructions script)]
     [:ul
-     (for [i (range (count script))]
-       (let [class (if (= i script-index) "active" "step")]
-         [:li {:class class :key i} (str (nth script i))]))
-     [:li (when (>= script-index (count script)) {:key "end" :class "active"}) "end"]]))
+     (for [i (range (count instructions))]
+       (let [[instr & data] (nth instructions i)]
+         (script-item instr data active-index i main-script?)))
+     [:li (when (>= active-index (count instructions)) {:key "end" :class "active"}) "end"]]))
 
 (defn turtle-page []
   (fn []
@@ -79,7 +93,7 @@
      [:div.container
       [:div.row
        [:div.col [canvas-element]]
-       [:div.col [script-view]]]]
+       [:div.col [script-view (get-in @app-state [:turtle :script]) true]]]]
 
      [:div.turtle-buttons
       [:button {:on-click turtle/back-to-start!} "<<"]

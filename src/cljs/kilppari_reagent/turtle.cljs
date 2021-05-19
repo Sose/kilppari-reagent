@@ -29,6 +29,16 @@
    [[:move 50]
     [:turn-right 45]
     [:move 100]
+    [:repeat 100 {:instructions
+                  [[:turn-right 3]
+                   [:repeat 10 {:instructions
+                                [[:move 20]
+                                 [:turn-left 90]
+                                 [:move 20]
+                                 [:turn-left 90]]
+                                :index 0}]
+                   [:move 5]]
+                  :index 0}]
     [:pen :up]
     [:move 75]
     [:turn-left 45]
@@ -120,6 +130,22 @@
 (defn turn-left! [angle]
   (swap! state/app-state update-in [:turtle :angle] #(add-angle % (- angle))))
 
+(declare do-script!)
+
+(defn turtle-repeat! [[times {:keys [:instructions]}]]
+  (doseq [_ (range times)]
+    (do-script! instructions (count instructions))))
+
+(defn do-script! [script until-step]
+  (doseq [step-n (range until-step)]
+    (let [[instr & data] (nth script step-n)]
+      (case instr
+        :move (move-turtle! (first data) step-n)
+        :turn-right (turn-right! (first data))
+        :turn-left (turn-left! (first data))
+        :repeat (turtle-repeat! data)
+        :pen nil)))) ;; pen instructions are handled by (pen-down? step-n)
+
 (defn update-turtle!
   "Updates current location based on script"
   []
@@ -128,13 +154,7 @@
         steps (get-in turtle [:script :index])]
     (reset-position!)
     (clear-screen)
-    (doseq [step-n (range steps)]
-      (let [[instr data] (nth script step-n)]
-        (case instr
-          :move (move-turtle! data step-n)
-          :turn-right (turn-right! data)
-          :turn-left (turn-left! data)
-          :pen nil))) ;; pen instructions are handled by (pen-down? step-n)
+    (do-script! script steps)
     (draw-turtle-line)
     (draw-turtle-img)))
 
