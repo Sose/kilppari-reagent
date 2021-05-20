@@ -196,3 +196,8 @@
         (swap! state/app-state assoc-in [:turtle :playing-id] interval-id)))
 
     (swap! state/app-state update-in [:turtle :playing] not)))
+
+(defn set-script! [script]
+  (let [prepared (prepare-script! script)]
+    (swap! state/app-state assoc-in [:turtle :script] prepared)
+    (swap! state/app-state assoc-in [:turtle :script-index] 0)))

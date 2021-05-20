@@ -40,5 +40,6 @@ eol = '\n'")
 (defn parse-turtle [str]
   (let [res (turtle-parser str)]
     (when (= (first res) :S)
-      (into [] (->> (rest res)
-                    (map mangle-line))))))
+      (->> (rest res)
+           (map mangle-line)
+           (into [])))))
