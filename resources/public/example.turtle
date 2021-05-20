@@ -1,3 +1,4 @@
+// functions cant take args
 fn circle
   repeat 120
     move 2

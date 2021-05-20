@@ -129,9 +129,11 @@
       [:button {:on-click turtle/turtle-step!} "->"]
       [:button {:on-click turtle/go-to-end!} ">>"]]]))
 
+(defonce txt (reagent/atom "")) ;;TODO: move this to app-state?
+
 (defn edit-page []
-  (let [default-script (get @app-state :default-script)
-        txt (reagent/atom default-script)]
+  (let [default-script (get @app-state :default-script)]
+    (when (empty? @txt) (reset! txt default-script))
     (if-not default-script
       [:span.main
        [:h1 "Loading"]]
