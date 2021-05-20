@@ -119,18 +119,11 @@
   (doseq [_ (range times)]
     (do-script! instructions (count instructions))))
 
-(defn turtle-defn! [data]
-  (js/console.log data))
-
 (defn turtle-call! [[fn-name]]
-  (js/console.log "turtle-call!" fn-name)
   (let [fn-def (get-in @state/app-state [:turtle :script-defs (keyword fn-name)])]
-    (js/console.log fn-def)
     (do-script! fn-def (count fn-def))))
 
 (defn prepare-function! [[fn-name instructions]]
-  (js/console.log "fn-name" fn-name)
-  (js/console.log instructions)
   (swap! state/app-state assoc-in [:turtle :script-defs (keyword fn-name)] instructions)
   nil)
 
@@ -154,7 +147,7 @@
         :turn-right (turn-right! (first data))
         :turn-left (turn-left! (first data))
         :repeat (turtle-repeat! data)
-        :function (turtle-defn! data)
+        :function (js/console.log "ERROR: function in do-script!")
         :call (turtle-call! data)
         :pen nil)))) ;; pen instructions are handled by (pen-down? step-n)
 
