@@ -25,22 +25,7 @@
 (def start-angle 0)
 
 (def default-turtle-script
-  [[:move 50]
-   [:turn-right 45]
-   [:move 100]
-   [:repeat 100
-    [[:turn-right 3]
-     [:repeat 10
-      [[:move 20]
-       [:turn-left 90]
-       [:move 20]
-       [:turn-left 90]]]
-     [:move 5]]]
-   [:pen :up]
-   [:move 75]
-   [:turn-left 45]
-   [:pen :down]
-   [:move 50]])
+  [])
 
 (def initial-turtle
   {:script default-turtle-script

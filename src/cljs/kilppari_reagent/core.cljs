@@ -13,11 +13,17 @@
    [kilppari-reagent.state :as state]
    [kilppari-reagent.parsing :as parsing]))
 
+(defn set-script! [script]
+  (let [prepared (turtle/prepare-script! script)]
+    (swap! app-state assoc-in [:turtle :script] prepared)
+    (swap! app-state assoc-in [:turtle :script-index] 0)))
+
 ;; Load a default script with AJAX
 (defn get-default-script! []
   (GET "/example.turtle"
     {:handler (fn [data]
-                (swap! app-state assoc :default-script data))
+                (swap! app-state assoc :default-script data)
+                (set-script! (parsing/parse-turtle data)))
      :error-handler (fn [err]
                       (js/alert "error loading default script")
                       (js/console.log err))}))
@@ -122,11 +128,6 @@
        (if (get-in @app-state [:turtle :playing]) "| |" "|>")]
       [:button {:on-click turtle/turtle-step!} "->"]
       [:button {:on-click turtle/go-to-end!} ">>"]]]))
-
-(defn set-script! [script]
-  (let [prepared (turtle/prepare-script! script)]
-    (swap! app-state assoc-in [:turtle :script] prepared)
-    (swap! app-state assoc-in [:turtle :script-index] 0)))
 
 (defn edit-page []
   (let [default-script (get @app-state :default-script)

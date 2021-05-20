@@ -5,10 +5,14 @@ fn circle
   end
 endfn
 
-call circle
+// comments are ignored
+pen down
 move 10
-call circle
-move 10
-call circle
-move 10
-call circle
+
+repeat 36 // cant step this yet
+  pen down
+  call circle
+  pen up
+  move 10
+  turn-right 10
+end
