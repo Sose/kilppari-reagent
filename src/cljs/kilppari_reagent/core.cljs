@@ -87,6 +87,12 @@
                 [:div (str ":repeat " (first data))]
                 [:div (script-view (second data) nil false)]]]
 
+      :function [:li.list-group-item
+                 {:key (second data)}
+                 [:div
+                  [:div (str ":fn " (first data))]
+                  [:div (script-view (second data) nil false)]]]
+
       [:li.list-group-item {:class class :key view-i} (str instr " " (first data))])))
 
 (defn script-view [instructions active-index show-active?]
@@ -118,8 +124,9 @@
       [:button {:on-click turtle/go-to-end!} ">>"]]]))
 
 (defn set-script! [script]
-  (swap! app-state assoc-in [:turtle :script] script)
-  (swap! app-state assoc-in [:turtle :script-index] 0))
+  (let [prepared (turtle/prepare-script! script)]
+    (swap! app-state assoc-in [:turtle :script] prepared)
+    (swap! app-state assoc-in [:turtle :script-index] 0)))
 
 (defn edit-page []
   (let [default-script (get @app-state :default-script)

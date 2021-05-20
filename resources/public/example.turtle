@@ -1,12 +1,14 @@
-pen down
-move 50
-turn-right 45
-move 25
-repeat 10
-    move 10
-    turn-left 5
-end
-pen up
-move 50
-pen down
-move 25
+fn circle
+  repeat 120
+    move 2
+    turn-left 3
+  end
+endfn
+
+call circle
+move 10
+call circle
+move 10
+call circle
+move 10
+call circle

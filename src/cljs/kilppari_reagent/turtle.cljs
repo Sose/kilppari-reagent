@@ -45,6 +45,7 @@
 (def initial-turtle
   {:script default-turtle-script
    :script-index 0
+   :script-defs {}
    :coords nil ;; reset-position! sets these 3
    :angle nil
    :line nil
@@ -133,6 +134,33 @@
   (doseq [_ (range times)]
     (do-script! instructions (count instructions))))
 
+(defn turtle-defn! [data]
+  (js/console.log data))
+
+(defn turtle-call! [[fn-name]]
+  (js/console.log "turtle-call!" fn-name)
+  (let [fn-def (get-in @state/app-state [:turtle :script-defs (keyword fn-name)])]
+    (js/console.log fn-def)
+    (do-script! fn-def (count fn-def))))
+
+(defn prepare-function! [[fn-name instructions]]
+  (js/console.log "fn-name" fn-name)
+  (js/console.log instructions)
+  (swap! state/app-state assoc-in [:turtle :script-defs (keyword fn-name)] instructions)
+  nil)
+
+(defn prepare-script!
+  "Plucks function definitions out of the script and defines those fns"
+  [script]
+  (into []
+        (filter
+         some?
+         (for [i (range (count script))]
+           (let [[instr & data] (nth script i)]
+             (case instr
+               :function (prepare-function! data)
+               (nth script i)))))))
+
 (defn do-script! [script until-step]
   (doseq [step-n (range until-step)]
     (let [[instr & data] (nth script step-n)]
@@ -141,6 +169,8 @@
         :turn-right (turn-right! (first data))
         :turn-left (turn-left! (first data))
         :repeat (turtle-repeat! data)
+        :function (turtle-defn! data)
+        :call (turtle-call! data)
         :pen nil)))) ;; pen instructions are handled by (pen-down? step-n)
 
 (defn update-turtle!
