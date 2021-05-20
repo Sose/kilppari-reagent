@@ -32,9 +32,7 @@ eol = '\n'")
     [:turn-left [:n n]] [:turn-left (str->int n)]
     [:pen x] [:pen (keyword x)]
     [:repeat [:n n] & x] [:repeat (str->int n) (into [] (map mangle-line x))]
-    [:function [:fn-name fn-name] & x] (do (js/console.log x)
-                                           (js/console.log (str x))
-                                           [:function fn-name (into [] (map mangle-line x))])
+    [:function [:fn-name fn-name] & x] [:function fn-name (into [] (map mangle-line x))]
     [:call [:fn-name fn-name]] [:call fn-name]
     [:end] [:end]
     :else line))
