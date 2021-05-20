@@ -9,7 +9,8 @@
 
 (defn edit-page []
   (let [default-script (get @app-state :default-script)]
-    (when (empty? @txt) (reset! txt default-script))
+    ;; if the editor is empty, set it to default script on loading the editor
+    (when (and default-script (empty? @txt)) (reset! txt default-script))
     (if-not default-script
       [:span.main
        [:h1 "Loading"]]
@@ -18,10 +19,11 @@
           [:span.main
            [:h1 "Editor"]
            [:div.row
-            [:div.col [:textarea {:rows 15
-                                  :cols 30
-                                  :value @txt
-                                  :on-change #(reset! txt (-> % .-target .-value))}]]
+            [:div.col [:textarea.editor
+                       {:rows 15
+                        :cols 30
+                        :value @txt
+                        :on-change #(reset! txt (-> % .-target .-value))}]]
             (if parsed
               [:div.col [script-view parsed 0 false]]
               [:div.col "No parse :("])]

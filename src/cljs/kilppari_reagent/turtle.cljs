@@ -196,7 +196,9 @@
 
     (swap! app-state update-in [:turtle :playing] not)))
 
-(defn set-script! [script]
+(defn set-script!
+  "Prepare a script by removing fn definitions and then set it as active"
+  [script]
   (let [prepared (prepare-script! script)]
     (swap! app-state assoc-in [:turtle :script] prepared)
     (swap! app-state assoc-in [:turtle :script-index] 0)))

@@ -42,3 +42,8 @@ canvas {
 .active {
   border: 1px solid red;
 }
+
+.editor {
+  white-space: nowrap;
+  overflow: auto;
+}
