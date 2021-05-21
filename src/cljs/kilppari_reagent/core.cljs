@@ -19,7 +19,9 @@
   (GET "/example.turtle"
     {:handler (fn [data]
                 (swap! app-state assoc :default-script data)
-                (turtle/set-script! (parsing/parse-turtle data)))
+                (let [[parse-status parse] (parsing/parse-turtle data)]
+                  ;; TODO: check for parse errors?
+                  (turtle/set-script! parse)))
      :error-handler (fn [err]
                       (js/alert "error loading default script")
                       (js/console.log err))}))

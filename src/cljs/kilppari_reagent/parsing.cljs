@@ -48,8 +48,9 @@ eol = '\n'")
     :else line))
 
 (defn parse-turtle [str]
-  (let [res (turtle-parser str)]
-    (when (= (first res) :S)
-      (->> (rest res)
-           (map process-line)
-           (into [])))))
+  (let [res (insta/parse turtle-parser str)]
+    (if (= (first res) :S)
+      [:success (->> (rest res)
+                     (map process-line)
+                     (into []))]
+      [:failure (pr-str res)])))

@@ -1,6 +1,6 @@
 fn circle n
   repeat 120
-    move 2
+    move n
     turn-left 3
   end
 endfn
