@@ -118,13 +118,18 @@
   (doseq [_ (range times)]
     (do-script! instructions (count instructions))))
 
-(defn turtle-call! [[fn-name]]
+(defn turtle-call! [[fn-name & args]]
+  (when args
+    (js/console.log "args" args))
   (let [fn-def (get-in @app-state [:turtle :script-defs (keyword fn-name)])]
     (do-script! fn-def (count fn-def))))
 
-(defn prepare-function! [[fn-name instructions]]
+(defn prepare-function! [[fn-name {:keys [args instructions]}]]
+  ;; (js/console.log "prep")
+  ;; (js/console.log fn-name)
+  ;; (js/console.log instructions)
   (swap! app-state assoc-in [:turtle :script-defs (keyword fn-name)] instructions)
-  nil)
+  nil) ;; explicitly return nil just in case?
 
 (defn prepare-script!
   "Plucks function definitions out of the script and defines those fns"

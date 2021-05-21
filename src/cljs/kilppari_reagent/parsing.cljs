@@ -14,8 +14,9 @@ move = <'move '> n
 turn-right = <'turn-right '> n
 turn-left = <'turn-left '> n
 repeat = <'repeat '> n <comment?> <eol> line* <end>
-function = <'fn '> fn-name <comment?> <eol> line* <endfn>
-call = <'call '> fn-name
+function = <'fn '> fn-name args? <comment?> <eol> line* <endfn>
+args = <whitespace+> #'[a-zA-Z0-9]+'
+call = <'call '> fn-name args?
 end = <whitespace*> <'end'>
 endfn = <whitespace*> <'endfn'>
 fn-name = #'[a-zA-Z0-9]+'
@@ -25,15 +26,21 @@ eol = '\n'")
 (defn str->int [s]
   (js/parseInt s))
 
-(defn mangle-line [line]
+;; TODO: I missed there's a insta/transform function
+(defn process-line [line]
   (match line
     [:move [:n n]] [:move (str->int n)]
     [:turn-right [:n n]] [:turn-right (str->int n)]
     [:turn-left [:n n]] [:turn-left (str->int n)]
     [:pen x] [:pen (keyword x)]
-    [:repeat [:n n] & x] [:repeat (str->int n) (into [] (map mangle-line x))]
-    [:function [:fn-name fn-name] & x] [:function fn-name (into [] (map mangle-line x))]
+    [:repeat [:n n] & x] [:repeat (str->int n) (into [] (map process-line x))]
+    [:function [:fn-name fn-name] & x] [:function fn-name
+                                        {:instructions (into [] (map process-line x))}]
+    [:function [:fn-name fn-name] [:args args] & x] [:function fn-name
+                                                     {:args args
+                                                      :instructions (into [] (map process-line x))}]
     [:call [:fn-name fn-name]] [:call fn-name]
+    [:call [:fn-name fn-name] [:args args]] [:call fn-name (str->int args)]
     [:end] [:end]
     :else line))
 
@@ -41,5 +48,5 @@ eol = '\n'")
   (let [res (turtle-parser str)]
     (when (= (first res) :S)
       (->> (rest res)
-           (map mangle-line)
+           (map process-line)
            (into [])))))

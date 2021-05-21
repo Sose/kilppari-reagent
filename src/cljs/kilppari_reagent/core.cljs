@@ -77,25 +77,25 @@
   (fn []
     [:span.main
      [:h1 "Turtle"]
+     [:div.turtle-buttons
+      [:button {:on-click turtle/back-to-start!} "Beginning"]
+      [:button {:on-click turtle/turtle-step-back!} "Step back"]
+      [:button {:on-click turtle/play-turtle!}
+       (if (get-in @app-state [:turtle :playing]) "Pause" "Play")]
+      [:button {:on-click turtle/turtle-step!} "Step"]
+      [:button {:on-click turtle/go-to-end!} "End"]
 
-     [:div.container
       [:div.row
        [:div.col [canvas-element]]
        [:div.col [script-view
                   (get-in @app-state [:turtle :script])
                   (get-in @app-state [:turtle :script-index])
-                  true]]]]
+                  true]]]]]))
 
-     [:div.turtle-buttons
-      [:button {:on-click turtle/back-to-start!} "<<"]
-      [:button {:on-click turtle/turtle-step-back!} "<-"]
-      [:button {:on-click turtle/play-turtle!}
-       (if (get-in @app-state [:turtle :playing]) "| |" "|>")]
-      [:button {:on-click turtle/turtle-step!} "->"]
-      [:button {:on-click turtle/go-to-end!} ">>"]]]))
 
 ;; -------------------------
 ;; Translate routes -> page components
+
 
 (defn page-for [route]
   (case route

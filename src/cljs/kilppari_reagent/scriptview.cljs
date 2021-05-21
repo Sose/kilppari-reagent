@@ -12,12 +12,12 @@
                 [:div (script-view (second data) nil false)]]]
 
       :function [:li.list-group-item
-                 {:key (second data)}
+                 {:key (first data)}
                  [:div
                   [:div (str ":fn " (first data))]
-                  [:div (script-view (second data) nil false)]]]
+                  [:div (script-view (:instructions (second data)) nil false)]]]
 
-      [:li.list-group-item {:class class :key view-i} (str instr " " (first data))])))
+      [:li.list-group-item {:class class :key view-i} (str instr " " data)])))
 
 (defn script-view [instructions active-index show-active?]
   [:ul.list-group

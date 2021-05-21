@@ -1,5 +1,4 @@
-// functions cant take args
-fn circle
+fn circle n
   repeat 120
     move 2
     turn-left 3
@@ -10,9 +9,11 @@ endfn
 pen down
 move 10
 
+call circle 10
+
 repeat 36 // cant step this yet
   pen down
-  call circle
+  call circle 2
   pen up
   move 10
   turn-right 10
