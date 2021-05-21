@@ -7,9 +7,7 @@
 
 (def mount-target
   [:div#app
-   [:h2 "Welcome to kilppari-reagent"]
-   [:p "please wait while Figwheel/shadow-cljs is waking up ..."]
-   [:p "(Check the js console for hints if nothing exciting happens.)"]])
+   [:h2 "Please enable Javascript"]])
 
 (defn head []
   [:head
