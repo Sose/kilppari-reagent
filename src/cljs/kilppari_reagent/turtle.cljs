@@ -58,7 +58,7 @@
 (defn clear-screen []
   (let [ctx (canvas-ctx)]
     (aset ctx "fillStyle" "white")
-    (.fillRect ctx 0 0 600 600)))
+    (.fillRect ctx 0 0 600 600))) ;; TODO: determine size of the canvas
 
 (defn draw-turtle-img
   "Draws a picture to denote the turtle"
@@ -151,7 +151,7 @@
         :pen nil)))) ;; pen instructions are handled by (pen-down? step-n)
 
 (defn update-turtle!
-  "Updates current location based on script"
+  "Runs a turtle until the turtle's script-index and draws the image"
   []
   (let [turtle (:turtle @app-state)
         script (get-in turtle [:script])
@@ -162,7 +162,10 @@
     (draw-turtle-line)
     (draw-turtle-img)))
 
-(defn turtle-step! []
+(defn turtle-step!
+  "Advances the script by one major step.
+  TODO: add support for sub-scripts like 'repeat'"
+  []
   (let [turtle (:turtle @app-state)
         max-index (count (get-in turtle [:script]))
         new-index (inc (get-in turtle [:script-index]))]
@@ -185,7 +188,10 @@
     (swap! app-state assoc-in [:turtle :script-index] max-index)
     (update-turtle!)))
 
-(defn play-turtle! []
+(defn play-turtle!
+  "Uses Javascripts setInterval to animate a turtle every 1 second.
+  Calling play-turtle! while the turtle is already playing, stops it."
+  []
   (let [is-playing (get-in @app-state [:turtle :playing])]
     (if is-playing
       (let [interval-id (get-in @app-state [:turtle :playing-id])]
