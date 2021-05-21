@@ -6,9 +6,10 @@
   "S = line* <end?>
 <line> = (<comment> <eol>) | <empty-line> | (<whitespace*> command <comment?> <eol>)
 <empty-line> = <whitespace*> <eol>
-<command> = move | turn-right | turn-left | repeat | pen | function | call
+<command> = let | move | turn-right | turn-left | repeat | pen | function | call
 <whitespace> = ' ' | '\t'
-<comment> = <whitespace>* <#'//[ a-zA-Z0-9]*'>
+<comment> = <whitespace*> <#'//[ a-zA-Z0-9]*'>
+let = <'let '> var-name n
 pen = <'pen '> ('up' | 'down')
 move = <'move '> n
 turn-right = <'turn-right '> n
@@ -20,6 +21,7 @@ call = <'call '> fn-name args?
 end = <whitespace*> <'end'>
 endfn = <whitespace*> <'endfn'>
 fn-name = #'[a-zA-Z0-9]+'
+var-name = #'[a-zA-Z0-9]+'
 n = #'[012345679]+'
 eol = '\n'")
 
@@ -33,6 +35,7 @@ eol = '\n'")
     [:turn-right [:n n]] [:turn-right (str->int n)]
     [:turn-left [:n n]] [:turn-left (str->int n)]
     [:pen x] [:pen (keyword x)]
+    [:let [:var-name v] [:n n]] [:let v (str->int n)]
     [:repeat [:n n] & x] [:repeat (str->int n) (into [] (map process-line x))]
     [:function [:fn-name fn-name] & x] [:function fn-name
                                         {:instructions (into [] (map process-line x))}]
