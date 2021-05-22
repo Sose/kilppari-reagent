@@ -12,6 +12,7 @@
 (defn pen-down?
   "Is the pen down at a given step index?"
   [step]
+  ;; TODO: this should work inside repeat statements
   (->> (get-in @app-state [:turtle :script])
        (take step)
        (filter #(= :pen (first %)))
