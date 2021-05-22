@@ -23,14 +23,16 @@
       [:span.main
        [:h1 "Loading"]]
       (fn []
-        (let [[parse-status parsed] (parsing/parse-turtle @txt)]
+        (let [[parse-status parsed] (parsing/parse-turtle @txt)
+              button-disabled? (= :failure parse-status)]
           [:span.main
            [:h1 "Editor"]
+           [:div.editor-buttons
+            [:button {:disabled button-disabled?
+                      :on-click #(set-script! parsed)} "Set as active"]
+            [:button {:on-click #(reset! txt default-script)} "Reset"]]
            [:div.row
             [:div.col [text-editor txt]]
             (if (= :success parse-status)
               [:div.col [script-view parsed 0 false]]
-              [:div.col [:div parsed]])]
-           [:div.editor-buttons
-            [:button {:on-click #(set-script! parsed)} "Set as active"]
-            [:button {:on-click #(reset! txt default-script)} "Reset"]]])))))
+              [:div.col [:div parsed]])]])))))
