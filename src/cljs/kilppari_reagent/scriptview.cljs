@@ -2,26 +2,28 @@
 
 (declare script-view)
 
-(defn script-item [instr data active-i view-i show-active?]
-  (let [class (if (and show-active? (= active-i view-i)) "active" "step")]
+(defn script-item [instr args active-i view-i show-active?]
+  (let [class (if (and show-active? (= active-i view-i)) "active" "step")
+        data (get-in args [:args])]
     (case instr
       :repeat [:li.list-group-item
                {:class class :key view-i}
                [:div
-                [:div (str ":repeat " (first data))]
-                [:div (script-view (second data) nil false)]]]
+                [:div (str ":repeat " (:value (first data)))]
+                [:div (script-view (:value (second data)) nil false)]]]
 
       :function [:li.list-group-item
                  {:key (first data)}
                  [:div
-                  [:div (str ":fn " (first data))]
-                  [:div (script-view (:instructions (second data)) nil false)]]]
+                  [:div (str ":fn " (:value (first data)))]
+                  [:div (script-view (get-in (second data) [:value :instructions]) nil false)]]]
 
-      [:li.list-group-item {:class class :key view-i} (str instr " " data)])))
+      [:li.list-group-item {:class class :key view-i} (str instr " " (:value data))])))
 
 (defn script-view [instructions active-index show-active?]
+  (js/console.log instructions)
   [:ul.list-group
    (for [i (range (count instructions))]
-     (let [[instr & data] (nth instructions i)]
-       (script-item instr data active-index i show-active?)))
+     (let [[instr args] (nth instructions i)]
+       (script-item instr args active-index i show-active?)))
    [:li.list-group-item {:key "end"} "end"]])

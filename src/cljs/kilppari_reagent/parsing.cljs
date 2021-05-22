@@ -28,23 +28,39 @@ eol = '\n'")
 (defn str->int [s]
   (js/parseInt s))
 
+(defn arg-val [x]
+  {:type :value :value x})
+
+(defn args-val [xs]
+  (into [] (map arg-val xs)))
+
 ;; TODO: I missed there's a insta/transform function
 (defn process-line [line]
   (match line
-    [:move [:n n]] [:move (str->int n)]
-    [:turn-right [:n n]] [:turn-right (str->int n)]
-    [:turn-left [:n n]] [:turn-left (str->int n)]
-    [:pen x] [:pen (keyword x)]
-    [:let [:var-name v] [:n n]] [:let v (str->int n)]
-    [:repeat [:n n] & x] [:repeat (str->int n) (into [] (map process-line x))]
-    [:function [:fn-name fn-name] [:args args] & x] [:function fn-name
-                                                     {:args args
-                                                      :instructions (into [] (map process-line x))}]
-    [:function [:fn-name fn-name] & x] [:function fn-name
-                                        {:instructions (into [] (map process-line x))}]
-    [:call [:fn-name fn-name] [:args args]] [:call fn-name (str->int args)]
-    [:call [:fn-name fn-name]] [:call fn-name]
-    [:end] [:end]
+    [:move [:n n]] [:move {:args (arg-val (str->int n))}]
+    [:turn-right [:n n]] [:turn-right {:args (arg-val (str->int n))}]
+    [:turn-left [:n n]] [:turn-left {:args (arg-val (str->int n))}]
+    [:pen x] [:pen {:args (arg-val (keyword x))}]
+
+    ;; broken from here
+    [:let [:var-name v] [:n n]] [:let {:args (args-val [v (str->int n)])}]
+    [:repeat [:n n] & x] [:repeat {:args (args-val [(str->int n) (into [] (map process-line x))])}]
+    [:function
+     [:fn-name fn-name]
+     [:args args]
+     & x] [:function {:args (args-val [fn-name
+                                       {:args args
+                                        :instructions
+                                        (into [] (map process-line x))}])}]
+    [:function
+     [:fn-name fn-name]
+     & x] [:function {:args (args-val [fn-name
+                                       {:args nil
+                                        :instructions
+                                        (into [] (map process-line x))}])}]
+    [:call [:fn-name fn-name] [:args args]] [:call {:args (args-val [fn-name (str->int args)])}]
+    [:call [:fn-name fn-name]] [:call {:args (arg-val fn-name)}]
+    [:end] [:end {:args []}]
     :else line))
 
 (defn parse-turtle [str]

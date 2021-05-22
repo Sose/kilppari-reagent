@@ -12,13 +12,11 @@
 (defn pen-down?
   "Is the pen down at a given step index?"
   [step]
-  (->> (get-in app-state [:turtle :script])
-       (take step)                  ;; example:
-       (filter #(= :pen (first %))) ;;=> ([:pen :up] [:pen :down])
-       last                         ;;=> [:pen :down]
-       second                       ;;=> :down
-       (not= :up)))                 ;; we do it like this in case the list is
-                                    ;; empty.. (not nil) => true
+  (->> (get-in @app-state [:turtle :script])
+       (take step)
+       (filter #(= :pen (first %)))
+       #(get-in % [:args :value])
+       (not= :up)))
 
 (def start-coords [100 100])
 (def start-angle 0)
@@ -118,16 +116,16 @@
   (doseq [_ (range times)]
     (do-script! instructions (count instructions))))
 
-(defn turtle-call! [[fn-name & args]]
-  (when args
-    (js/console.log "args" args))
-  (let [fn-def (get-in @app-state [:turtle :script-defs (keyword fn-name)])]
-    (do-script! fn-def (count fn-def))))
+(defn turtle-call!
+  ([fn-name]
+   (turtle-call! fn-name nil))
+  ([fn-name args]
+   (when args
+     (js/console.log "args" args))
+   (let [fn-def (get-in @app-state [:turtle :script-defs (keyword fn-name)])]
+     (do-script! fn-def (count fn-def)))))
 
-(defn prepare-function! [[fn-name {:keys [args instructions]}]]
-  ;; (js/console.log "prep")
-  ;; (js/console.log fn-name)
-  ;; (js/console.log instructions)
+(defn prepare-function! [fn-name {:keys [args instructions]}]
   (swap! app-state assoc-in [:turtle :script-defs (keyword fn-name)] instructions)
   nil) ;; explicitly return nil just in case?
 
@@ -138,21 +136,26 @@
         (filter
          some?
          (for [i (range (count script))]
-           (let [[instr & data] (nth script i)]
+           (let [[instr args] (nth script i)
+                 a (:args args)
+                 fn-name (:value (first a))
+                 data (:value (second a))]
              (case instr
-               :function (prepare-function! data)
+               :function (prepare-function! fn-name data)
                (nth script i)))))))
 
 (defn do-script! [script until-step]
   (doseq [step-n (range until-step)]
-    (let [[instr & data] (nth script step-n)]
+    (let [[instr args] (nth script step-n)
+          data (get-in args [:args])]
       (case instr
-        :move (move-turtle! (first data) step-n)
-        :turn-right (turn-right! (first data))
-        :turn-left (turn-left! (first data))
-        :repeat (turtle-repeat! data)
+        :move (move-turtle! (:value data) step-n)
+        :turn-right (turn-right! (:value data))
+        :turn-left (turn-left! (:value data))
+        :repeat (turtle-repeat! [(:value (first data))
+                                 (:value (second data))])
         :function (js/console.log "ERROR: function in do-script!")
-        :call (turtle-call! data)
+        :call (turtle-call! (:value data))
         :pen nil)))) ;; pen instructions are handled by (pen-down? step-n)
 
 (defn update-turtle!
