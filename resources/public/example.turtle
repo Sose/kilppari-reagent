@@ -5,7 +5,10 @@ fn circle n
   end
 endfn
 
+move 50
 call circle 3
+move 75
+call circle 5
 
 repeat 36 // cant step this yet
   pen down

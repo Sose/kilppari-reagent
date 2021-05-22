@@ -57,6 +57,7 @@
     [:span.main
      [:h1 "About kilppari-reagent"]
      [:p "Made with Clojure and Clojurescript and Reagent to practice."]
+     [:p "See " [:a {:href "https://github.com/Sose/kilppari-reagent"} "Github page"] " for code"]
      [:p "Original turtle vector graphic is from "
       [:a
        {:href "https://www.vecteezy.com/free-vector/nature"}
