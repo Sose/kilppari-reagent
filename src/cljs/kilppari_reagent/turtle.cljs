@@ -122,7 +122,6 @@
   (let [fn-def (get-in @app-state [:turtle :script-defs (keyword fn-name)])
         args (get fn-def :args)
         instructions (get fn-def :instructions)]
-    (js/console.log "call!" [args arg-value] (keyword fn-name))
     (do-script! instructions (count instructions) [args arg-value] (keyword fn-name))))
 
 (defn prepare-function! [fn-name {:keys [args instructions]}]
@@ -130,7 +129,6 @@
   nil) ;; explicitly return nil just in case?
 
 (defn prepare-let! [var-name value]
-  (js/console.log "prepare-let!" var-name value)
   (swap! app-state assoc-in [:turtle :var-defs (keyword var-name)] value)
   nil)
 
@@ -151,7 +149,6 @@
                (nth script i)))))))
 
 (defn get-var-by-name [var-name fn-args inside-fn-name]
-  (js/console.log "get-v-b-n" var-name fn-args inside-fn-name)
   (if (and fn-args (= var-name (first fn-args)))
     (second fn-args)
     (get-in @app-state [:turtle :var-defs var-name])))
@@ -166,7 +163,6 @@
   ([script until-step]
    (do-script! script until-step nil nil))
   ([script until-step fn-args inside-fn-name]
-   (js/console.log "doscript args" fn-args inside-fn-name)
    (doseq [step-n (range until-step)]
      (let [[instr args] (nth script step-n)
            data (get-in args [:args])]
