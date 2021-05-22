@@ -1,6 +1,6 @@
-fn circle n
+fn circle n //args not yet implemented
   repeat 120
-    move n
+    move 2
     turn-left 3
   end
 endfn
@@ -9,11 +9,11 @@ endfn
 pen down
 move 10
 
-call circle 10
+call circle
 
 repeat 36 // cant step this yet
   pen down
-  call circle 2
+  call circle
   pen up
   move 10
   turn-right 10

@@ -37,13 +37,13 @@ eol = '\n'")
     [:pen x] [:pen (keyword x)]
     [:let [:var-name v] [:n n]] [:let v (str->int n)]
     [:repeat [:n n] & x] [:repeat (str->int n) (into [] (map process-line x))]
-    [:function [:fn-name fn-name] & x] [:function fn-name
-                                        {:instructions (into [] (map process-line x))}]
     [:function [:fn-name fn-name] [:args args] & x] [:function fn-name
                                                      {:args args
                                                       :instructions (into [] (map process-line x))}]
-    [:call [:fn-name fn-name]] [:call fn-name]
+    [:function [:fn-name fn-name] & x] [:function fn-name
+                                        {:instructions (into [] (map process-line x))}]
     [:call [:fn-name fn-name] [:args args]] [:call fn-name (str->int args)]
+    [:call [:fn-name fn-name]] [:call fn-name]
     [:end] [:end]
     :else line))
 

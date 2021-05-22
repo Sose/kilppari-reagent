@@ -20,10 +20,11 @@
     {:handler (fn [data]
                 (swap! app-state assoc :default-script data)
                 (let [[parse-status parse] (parsing/parse-turtle data)]
-                  ;; TODO: check for parse errors?
-                  (turtle/set-script! parse)))
+                  (if (= :success parse-status)
+                    (turtle/set-script! parse)
+                    (js/console.log "Parse error in default script"))))
      :error-handler (fn [err]
-                      (js/alert "error loading default script")
+                      (js/alert "GET Error loading default script")
                       (js/console.log err))}))
 
 
