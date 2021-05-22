@@ -1,3 +1,5 @@
+let n 3
+
 fn circle n //args not yet implemented
   repeat 120
     move 2

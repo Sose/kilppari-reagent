@@ -130,6 +130,11 @@
   (swap! app-state assoc-in [:turtle :script-defs (keyword fn-name)] instructions)
   nil) ;; explicitly return nil just in case?
 
+(defn prepare-let! [var-name value]
+  (js/console.log "prepare-let!" var-name value)
+  (swap! app-state assoc-in [:turtle :var-defs (keyword var-name)] value)
+  nil)
+
 (defn prepare-script!
   "Plucks function definitions out of the script and defines those fns"
   [script]
@@ -143,17 +148,26 @@
                  data (:value (second a))]
              (case instr
                :function (prepare-function! fn-name data)
+               :let (prepare-let! fn-name data)
                (nth script i)))))))
+
+(defn get-var-by-name [var-name]
+  (get-in @app-state [:turtle :var-defs var-name]))
+
+(defn get-val-or-var [{:keys [type value]}]
+  (case type
+    :value value
+    :variable (get-var-by-name value)))
 
 (defn do-script! [script until-step]
   (doseq [step-n (range until-step)]
     (let [[instr args] (nth script step-n)
           data (get-in args [:args])]
       (case instr
-        :move (move-turtle! (:value data) step-n)
-        :turn-right (turn-right! (:value data))
-        :turn-left (turn-left! (:value data))
-        :repeat (turtle-repeat! [(:value (first data))
+        :move (move-turtle! (get-val-or-var data) step-n)
+        :turn-right (turn-right! (get-val-or-var data))
+        :turn-left (turn-left! (get-val-or-var data))
+        :repeat (turtle-repeat! [(get-val-or-var (first data))
                                  (:value (second data))])
         :function (js/console.log "ERROR: function in do-script!")
         :call (turtle-call! (:value data))

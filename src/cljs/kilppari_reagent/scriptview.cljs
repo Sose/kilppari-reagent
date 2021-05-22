@@ -18,6 +18,10 @@
                   [:div (str ":fn " (:value (first data)))]
                   [:div (script-view (get-in (second data) [:value :instructions]) nil false)]]]
 
+      :let [:li.list-group-item
+            {:key (-> data first :value)}
+            (str "let " (-> data first :value) " = " (-> data second :value))]
+
       [:li.list-group-item {:class class :key view-i} (str instr " " (:value data))])))
 
 (defn script-view [instructions active-index show-active?]
