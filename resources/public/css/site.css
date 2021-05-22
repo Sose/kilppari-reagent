@@ -43,7 +43,12 @@ canvas {
   border: 1px solid red;
 }
 
+.editor-wrapper {
+  /* border: 1px solid red; */
+}
+
 .editor {
   white-space: nowrap;
   overflow: auto;
+  width: auto;
 }

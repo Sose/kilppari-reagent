@@ -7,6 +7,14 @@
 
 (defonce txt (reagent/atom "")) ;;TODO: move this to app-state?
 
+(defn text-editor [txt-atom]
+  [:div.editor-wrapper
+   [:textarea.editor
+    {:rows 15
+     :cols 30
+     :value @txt-atom
+     :on-change #(reset! txt-atom (-> % .-target .-value))}]])
+
 (defn edit-page []
   (let [default-script (get @app-state :default-script)]
     ;; if the editor is empty, set it to default script on loading the editor
@@ -19,11 +27,7 @@
           [:span.main
            [:h1 "Editor"]
            [:div.row
-            [:div.col [:textarea.editor
-                       {:rows 15
-                        :cols 30
-                        :value @txt
-                        :on-change #(reset! txt (-> % .-target .-value))}]]
+            [:div.col [text-editor txt]]
             (if (= :success parse-status)
               [:div.col [script-view parsed 0 false]]
               [:div.col [:div parsed]])]
