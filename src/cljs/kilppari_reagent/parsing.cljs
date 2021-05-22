@@ -16,8 +16,8 @@ turn-right = <'turn-right '> (n | var-name)
 turn-left = <'turn-left '> (n | var-name)
 repeat = <'repeat '> n <comment?> <eol> line* <end>
 function = <'fn '> fn-name <whitespace?> args? <comment?> <eol> line* <endfn>
-args = <whitespace+> #'[a-zA-Z0-9]+'
-call = <'call '> fn-name args?
+args = <whitespace+> #'[a-zA-Z]+'
+call = <'call '> fn-name <whitespace?> n?
 end = <whitespace*> <'end'>
 endfn = <whitespace*> <'endfn'>
 fn-name = #'[a-zA-Z]+'
@@ -56,7 +56,7 @@ eol = '\n'")
      [:fn-name fn-name]
      [:args args]
      & x] [:function {:args (args-val [fn-name
-                                       {:args args
+                                       {:args (keyword args)
                                         :instructions
                                         (into [] (map process-line x))}])}]
     [:function
@@ -65,10 +65,10 @@ eol = '\n'")
                                        {:args nil
                                         :instructions
                                         (into [] (map process-line x))}])}]
-    [:call [:fn-name fn-name] [:args args]] [:call {:args (args-val [fn-name (str->int args)])}]
+    [:call [:fn-name fn-name] [:n n]] [:call {:args (args-val [fn-name (str->int n)])}]
     [:call [:fn-name fn-name]] [:call {:args (arg-val fn-name)}]
     [:end] [:end {:args []}]
-    :else line))
+    :else [:error :parse-error-process-line]))
 
 (defn parse-turtle [str]
   (let [res (insta/parse turtle-parser str)]

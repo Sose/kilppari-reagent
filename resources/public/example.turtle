@@ -1,21 +1,15 @@
-let n 3
-
-fn circle n //args not yet implemented
-  repeat 120
-    move 2
-    turn-left 3
+fn circle n
+  repeat 30
+    move n
+    turn-left 12
   end
 endfn
 
-// comments are ignored
-pen down
-move 10
-
-call circle
+call circle 3
 
 repeat 36 // cant step this yet
   pen down
-  call circle
+  call circle 5
   pen up
   move 10
   turn-right 10

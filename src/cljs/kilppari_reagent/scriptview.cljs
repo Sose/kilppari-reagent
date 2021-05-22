@@ -25,7 +25,6 @@
       [:li.list-group-item {:class class :key view-i} (str instr " " (:value data))])))
 
 (defn script-view [instructions active-index show-active?]
-  (js/console.log instructions)
   [:ul.list-group
    (for [i (range (count instructions))]
      (let [[instr args] (nth instructions i)]

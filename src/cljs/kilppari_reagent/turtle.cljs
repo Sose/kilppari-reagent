@@ -113,21 +113,20 @@
 
 (declare do-script!)
 
-(defn turtle-repeat! [[times instructions]]
+(defn turtle-repeat! [[times instructions] fn-args inside-fn-name]
   (doseq [_ (range times)]
-    (do-script! instructions (count instructions))))
+    (do-script! instructions (count instructions) fn-args inside-fn-name)))
 
 (defn turtle-call!
-  ([fn-name]
-   (turtle-call! fn-name nil))
-  ([fn-name args]
-   (when args
-     (js/console.log "args" args))
-   (let [fn-def (get-in @app-state [:turtle :script-defs (keyword fn-name)])]
-     (do-script! fn-def (count fn-def)))))
+  [fn-name arg-value]
+  (let [fn-def (get-in @app-state [:turtle :script-defs (keyword fn-name)])
+        args (get fn-def :args)
+        instructions (get fn-def :instructions)]
+    (js/console.log "call!" [args arg-value] (keyword fn-name))
+    (do-script! instructions (count instructions) [args arg-value] (keyword fn-name))))
 
 (defn prepare-function! [fn-name {:keys [args instructions]}]
-  (swap! app-state assoc-in [:turtle :script-defs (keyword fn-name)] instructions)
+  (swap! app-state assoc-in [:turtle :script-defs (keyword fn-name)] {:args args :instructions instructions})
   nil) ;; explicitly return nil just in case?
 
 (defn prepare-let! [var-name value]
@@ -151,27 +150,36 @@
                :let (prepare-let! fn-name data)
                (nth script i)))))))
 
-(defn get-var-by-name [var-name]
-  (get-in @app-state [:turtle :var-defs var-name]))
+(defn get-var-by-name [var-name fn-args inside-fn-name]
+  (js/console.log "get-v-b-n" var-name fn-args inside-fn-name)
+  (if (and fn-args (= var-name (first fn-args)))
+    (second fn-args)
+    (get-in @app-state [:turtle :var-defs var-name])))
 
-(defn get-val-or-var [{:keys [type value]}]
+(defn get-val-or-var [{:keys [type value]} fn-args inside-fn-name]
   (case type
     :value value
-    :variable (get-var-by-name value)))
+    :variable (get-var-by-name value fn-args inside-fn-name)
+    (js/console.log "error in get-val-or-var." type value)))
 
-(defn do-script! [script until-step]
-  (doseq [step-n (range until-step)]
-    (let [[instr args] (nth script step-n)
-          data (get-in args [:args])]
-      (case instr
-        :move (move-turtle! (get-val-or-var data) step-n)
-        :turn-right (turn-right! (get-val-or-var data))
-        :turn-left (turn-left! (get-val-or-var data))
-        :repeat (turtle-repeat! [(get-val-or-var (first data))
-                                 (:value (second data))])
-        :function (js/console.log "ERROR: function in do-script!")
-        :call (turtle-call! (:value data))
-        :pen nil)))) ;; pen instructions are handled by (pen-down? step-n)
+(defn do-script!
+  ([script until-step]
+   (do-script! script until-step nil nil))
+  ([script until-step fn-args inside-fn-name]
+   (js/console.log "doscript args" fn-args inside-fn-name)
+   (doseq [step-n (range until-step)]
+     (let [[instr args] (nth script step-n)
+           data (get-in args [:args])]
+       (case instr
+         :move (move-turtle! (get-val-or-var data fn-args inside-fn-name) step-n)
+         :turn-right (turn-right! (get-val-or-var data fn-args inside-fn-name))
+         :turn-left (turn-left! (get-val-or-var data fn-args inside-fn-name))
+         :repeat (turtle-repeat! [(get-val-or-var (first data) fn-args inside-fn-name)
+                                  (:value (second data))]
+                                 fn-args, inside-fn-name)
+         :function (js/console.log "ERROR: function in do-script!")
+         :call (turtle-call! (:value (first data)) (:value (second data)))
+         :pen nil))))) ;; pen instructions are handled by (pen-down? step-n)
 
 (defn update-turtle!
   "Runs a turtle until the turtle's script-index and draws the image"
